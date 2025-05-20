@@ -17,30 +17,22 @@ interface SidebarProps {
 const SidebarLink: React.FC<{
   to: string;
   icon: React.ReactNode;
-  label: string;
   isActive: boolean;
-  isMobile?: boolean;
-}> = ({ to, icon, label, isActive, isMobile }) => (
+}> = ({ to, icon, isActive }) => (
   <Link
     to={to}
     className={`
-      flex items-center space-x-3 p-3 rounded-md transition-all duration-200
-      ${isMobile 
-        ? `flex-col space-x-0 space-y-1 flex-1 ${isActive ? 'text-indigo-600' : 'text-gray-600'}`
-        : `${isActive ? 'bg-indigo-100 text-indigo-900' : 'text-gray-700 hover:bg-gray-100'}`
-      }
+      flex items-center justify-center p-3 rounded-md transition-all duration-200
+      ${isActive ? 'text-indigo-600' : 'text-gray-600 hover:text-gray-900'}
+      relative
     `}
   >
-    <div className={`
-      ${isMobile && isActive ? 'relative' : ''}
-      ${isMobile ? 'text-center' : ''}
-    `}>
-      <span className={`text-lg ${isMobile ? 'text-2xl' : ''}`}>{icon}</span>
-      {isMobile && isActive && (
+    <div className="text-2xl">
+      {icon}
+      {isActive && (
         <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-indigo-600 rounded-full" />
       )}
     </div>
-    <span className={`font-medium ${isMobile ? 'text-xs' : ''}`}>{label}</span>
   </Link>
 );
 
@@ -49,11 +41,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ isMobile = true }) => {
   const { logout } = useAuth();
 
   const links = [
-    { to: '/', icon: <LayoutDashboard size={isMobile ? 24 : 20} />, label: 'Dashboard' },
-    { to: '/products', icon: <Package size={isMobile ? 24 : 20} />, label: 'Products' },
-    { to: '/transactions', icon: <History size={isMobile ? 24 : 20} />, label: 'Transactions' },
-    { to: '/reports', icon: <BarChart3 size={isMobile ? 24 : 20} />, label: 'Reports' },
-    { to: '/settings', icon: <Settings size={isMobile ? 24 : 20} />, label: 'Settings' },
+    { to: '/', icon: <LayoutDashboard size={24} /> },
+    { to: '/products', icon: <Package size={24} /> },
+    { to: '/transactions', icon: <History size={24} /> },
+    { to: '/reports', icon: <BarChart3 size={24} /> },
+    { to: '/settings', icon: <Settings size={24} /> },
   ];
 
   const isActive = (path: string) => {
@@ -66,15 +58,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ isMobile = true }) => {
   if (isMobile) {
     return (
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50">
-        <nav className="flex justify-between items-center px-4 py-2">
+        <nav className="flex justify-between items-center px-6 py-2">
           {links.map((link) => (
             <SidebarLink
               key={link.to}
               to={link.to}
               icon={link.icon}
-              label={link.label}
               isActive={isActive(link.to)}
-              isMobile={true}
             />
           ))}
         </nav>
@@ -84,29 +74,27 @@ export const Sidebar: React.FC<SidebarProps> = ({ isMobile = true }) => {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="p-4 border-b">
-        <h1 className="text-xl font-bold text-indigo-700">InventoryPro</h1>
+      <div className="p-4 border-b flex justify-center">
+        <h1 className="text-2xl font-bold text-indigo-700">IP</h1>
       </div>
       
-      <nav className="flex-1 p-4 space-y-2">
+      <nav className="flex-1 p-4 space-y-6 flex flex-col items-center">
         {links.map((link) => (
           <SidebarLink
             key={link.to}
             to={link.to}
             icon={link.icon}
-            label={link.label}
             isActive={isActive(link.to)}
           />
         ))}
       </nav>
 
-      <div className="p-4 border-t mt-auto">
+      <div className="p-4 border-t mt-auto bg-gray-50">
         <button
           onClick={logout}
-          className="flex items-center space-x-3 p-3 w-full rounded-md text-gray-700 hover:bg-gray-100 transition-all duration-200"
+          className="w-full flex items-center justify-center p-3 rounded-md text-gray-600 hover:text-gray-900 transition-all duration-200"
         >
-          <LogOut size={20} />
-          <span className="font-medium">Logout</span>
+          <LogOut size={24} />
         </button>
       </div>
     </div>
