@@ -4,10 +4,8 @@ import {
   Package,
   History,
   BarChart3,
-  LogOut,
-  Menu,
-  X,
   Settings,
+  LogOut,
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
@@ -28,7 +26,7 @@ const SidebarLink: React.FC<{
     className={`
       flex items-center space-x-3 p-3 rounded-md transition-all duration-200
       ${isMobile 
-        ? `flex-col space-x-0 space-y-1 ${isActive ? 'text-indigo-600' : 'text-gray-600'}`
+        ? `flex-col space-x-0 space-y-1 flex-1 ${isActive ? 'text-indigo-600' : 'text-gray-600'}`
         : `${isActive ? 'bg-indigo-100 text-indigo-900' : 'text-gray-700 hover:bg-gray-100'}`
       }
     `}
@@ -68,7 +66,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isMobile = true }) => {
   if (isMobile) {
     return (
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50">
-        <nav className="flex justify-around items-center px-6 py-2">
+        <nav className="flex justify-between items-center px-4 py-2">
           {links.map((link) => (
             <SidebarLink
               key={link.to}
@@ -85,24 +83,24 @@ export const Sidebar: React.FC<SidebarProps> = ({ isMobile = true }) => {
   }
 
   return (
-    <aside className="flex flex-col h-full justify-between">
-      <div>
-        <div className="p-4 flex items-center justify-between border-b">
-          <h1 className="text-xl font-bold text-indigo-700">InventoryPro</h1>
-        </div>
-        <nav className="p-4 space-y-2">
-          {links.map((link) => (
-            <SidebarLink
-              key={link.to}
-              to={link.to}
-              icon={link.icon}
-              label={link.label}
-              isActive={isActive(link.to)}
-            />
-          ))}
-        </nav>
+    <div className="flex flex-col h-full">
+      <div className="p-4 border-b">
+        <h1 className="text-xl font-bold text-indigo-700">InventoryPro</h1>
       </div>
-      <div className="p-4 border-t">
+      
+      <nav className="flex-1 p-4 space-y-2">
+        {links.map((link) => (
+          <SidebarLink
+            key={link.to}
+            to={link.to}
+            icon={link.icon}
+            label={link.label}
+            isActive={isActive(link.to)}
+          />
+        ))}
+      </nav>
+
+      <div className="p-4 border-t mt-auto">
         <button
           onClick={logout}
           className="flex items-center space-x-3 p-3 w-full rounded-md text-gray-700 hover:bg-gray-100 transition-all duration-200"
@@ -111,6 +109,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ isMobile = true }) => {
           <span className="font-medium">Logout</span>
         </button>
       </div>
-    </aside>
+    </div>
   );
 };
