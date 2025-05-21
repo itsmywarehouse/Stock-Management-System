@@ -14,20 +14,15 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   }
 
   return (
-    <div className="flex min-h-screen bg-gray-100">
-      {/* Desktop Sidebar */}
-      <div className="hidden md:block w-64 fixed inset-y-0 left-0 bg-white shadow-lg z-30">
-        <Sidebar />
-      </div>
-
-      {/* Main Content */}
-      <main className="flex-1 md:ml-64 p-6">
+    <div className="flex flex-col h-screen bg-gray-100">
+      <main className="flex-1 p-6 pb-20 md:pb-6 md:ml-64 overflow-y-auto">
         {children}
       </main>
-
-      {/* Mobile Footer Menu */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-30">
-        <Sidebar isMobile />
+      <div className="md:hidden">
+        <Sidebar />
+      </div>
+      <div className="hidden md:block md:w-64 bg-white h-screen shadow-md fixed left-0 top-0 z-10">
+        <Sidebar isMobile={false} />
       </div>
     </div>
   );
