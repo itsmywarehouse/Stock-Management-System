@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Plus, Search, Filter, AlertCircle, Package, Trash2, Edit } from 'lucide-react';
+import { Plus, Search, Filter, AlertCircle, Package, Trash2, Edit, Upload } from 'lucide-react';
 import { Table } from '../components/ui/Table';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Modal } from '../components/ui/Modal';
 import { ProductForm } from '../components/products/ProductForm';
+import { ProductImport } from '../components/products/ProductImport';
 import { supabase } from '../lib/supabase';
 import { Product } from '../types';
 
@@ -21,6 +22,7 @@ export const ProductsPage: React.FC = () => {
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [categories, setCategories] = useState<string[]>([]);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
@@ -61,7 +63,48 @@ export const ProductsPage: React.FC = () => {
     }
   };
 
-  // Rest of your existing filtering and sorting logic...
+  const handleSearch = (value: string) => {
+    setSearchTerm(value);
+    filterProducts(value, selectedCategory);
+  };
+
+  const handleCategoryFilter = (category: string) => {
+    setSelectedCategory(category);
+    filterProducts(searchTerm, category);
+  };
+
+  const filterProducts = (search: string, category: string) => {
+    let filtered = [...products];
+
+    if (search) {
+      const searchLower = search.toLowerCase();
+      filtered = filtered.filter(product =>
+        product.name.toLowerCase().includes(searchLower) ||
+        product.sku.toLowerCase().includes(searchLower) ||
+        product.supplier?.toLowerCase().includes(searchLower)
+      );
+    }
+
+    if (category) {
+      filtered = filtered.filter(product => product.category === category);
+    }
+
+    setFilteredProducts(filtered);
+  };
+
+  const handleSort = (column: keyof Product) => {
+    const isAsc = sortColumn === column && sortDirection === 'asc';
+    setSortDirection(isAsc ? 'desc' : 'asc');
+    setSortColumn(column);
+
+    const sorted = [...filteredProducts].sort((a, b) => {
+      if (a[column] < b[column]) return isAsc ? 1 : -1;
+      if (a[column] > b[column]) return isAsc ? -1 : 1;
+      return 0;
+    });
+
+    setFilteredProducts(sorted);
+  };
 
   const columns = [
     { header: 'Name', accessor: 'name' as keyof Product, sortable: true },
@@ -120,16 +163,51 @@ export const ProductsPage: React.FC = () => {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center space-y-4 sm:space-y-0">
         <h1 className="text-2xl font-bold text-gray-900">Products</h1>
-        <Button 
-          leftIcon={<Plus size={16} />}
-          onClick={() => setIsAddModalOpen(true)}
-        >
-          Add Product
-        </Button>
+        <div className="flex space-x-2">
+          <Button 
+            variant="outline"
+            leftIcon={<Upload size={16} />}
+            onClick={() => setIsImportModalOpen(true)}
+          >
+            Import
+          </Button>
+          <Button 
+            leftIcon={<Plus size={16} />}
+            onClick={() => setIsAddModalOpen(true)}
+          >
+            Add Product
+          </Button>
+        </div>
       </div>
 
       <Card>
-        {/* Your existing search and filter UI */}
+        <div className="p-4 border-b border-gray-200">
+          <div className="flex flex-col sm:flex-row sm:items-center space-y-4 sm:space-y-0 sm:space-x-4">
+            <div className="flex-1">
+              <Input
+                placeholder="Search products..."
+                value={searchTerm}
+                onChange={(e) => handleSearch(e.target.value)}
+                leftIcon={<Search className="h-5 w-5 text-gray-400" />}
+              />
+            </div>
+            <div className="flex items-center space-x-2">
+              <Filter className="h-5 w-5 text-gray-400" />
+              <select
+                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                value={selectedCategory}
+                onChange={(e) => handleCategoryFilter(e.target.value)}
+              >
+                <option value="">All Categories</option>
+                {categories.map((category) => (
+                  <option key={category} value={category}>
+                    {category}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </div>
         
         {filteredProducts.length === 0 ? (
           <div className="text-center py-8">
@@ -171,6 +249,21 @@ export const ProductsPage: React.FC = () => {
             setIsAddModalOpen(false);
           }}
           onCancel={() => setIsAddModalOpen(false)}
+        />
+      </Modal>
+
+      {/* Import Products Modal */}
+      <Modal
+        isOpen={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
+        title="Import Products"
+      >
+        <ProductImport
+          onSuccess={() => {
+            fetchProducts();
+            setIsImportModalOpen(false);
+          }}
+          onCancel={() => setIsImportModalOpen(false)}
         />
       </Modal>
 
