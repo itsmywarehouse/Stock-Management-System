@@ -16,6 +16,9 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
   onCancel,
 }) => {
   const [products, setProducts] = useState<Product[]>([]);
+  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [showDropdown, setShowDropdown] = useState(false);
   const [formData, setFormData] = useState({
     productId: '',
     quantity: 1,
@@ -27,12 +30,21 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
     fetchProducts();
   }, []);
 
+  useEffect(() => {
+    const filtered = products.filter(product => 
+      product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product.sku.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    setFilteredProducts(filtered);
+  }, [searchTerm, products]);
+
   const fetchProducts = async () => {
     const { data } = await supabase
       .from('products')
       .select('*');
     if (data) {
       setProducts(data);
+      setFilteredProducts(data);
     }
   };
 
@@ -57,23 +69,44 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
     }
   };
 
+  const handleProductSelect = (product: Product) => {
+    setFormData({ ...formData, productId: product.id });
+    setSearchTerm(product.name);
+    setShowDropdown(false);
+  };
+
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
+      <div className="relative">
         <label className="block text-sm font-medium text-gray-700">Product</label>
-        <select
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-          value={formData.productId}
-          onChange={(e) => setFormData({ ...formData, productId: e.target.value })}
+        <Input
+          value={searchTerm}
+          onChange={(e) => {
+            setSearchTerm(e.target.value);
+            setShowDropdown(true);
+          }}
+          onFocus={() => setShowDropdown(true)}
+          placeholder="Search for a product..."
           required
-        >
-          <option value="">Select a product</option>
-          {products.map((product) => (
-            <option key={product.id} value={product.id}>
-              {product.name} (SKU: {product.sku})
-            </option>
-          ))}
-        </select>
+        />
+        {showDropdown && (
+          <div className="absolute z-10 w-full mt-1 bg-white rounded-md shadow-lg max-h-60 overflow-auto border border-gray-200">
+            {filteredProducts.length > 0 ? (
+              filteredProducts.map((product) => (
+                <div
+                  key={product.id}
+                  className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                  onClick={() => handleProductSelect(product)}
+                >
+                  <div className="font-medium">{product.name}</div>
+                  <div className="text-sm text-gray-500">SKU: {product.sku}</div>
+                </div>
+              ))
+            ) : (
+              <div className="px-4 py-2 text-gray-500">No products found</div>
+            )}
+          </div>
+        )}
       </div>
       
       <Input
