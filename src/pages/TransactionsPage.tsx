@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Search, ArrowUpCircle, ArrowDownCircle, FileText } from 'lucide-react';
+import { Plus, Search, ArrowUpCircle, ArrowDownCircle, FileText, Upload } from 'lucide-react';
 import { Table } from '../components/ui/Table';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Modal } from '../components/ui/Modal';
 import { TransactionForm } from '../components/transactions/TransactionForm';
+import { TransactionImport } from '../components/transactions/TransactionImport';
 import { supabase } from '../lib/supabase';
 import { Transaction } from '../types';
 
@@ -20,6 +21,8 @@ export const TransactionsPage: React.FC = () => {
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [isStockInModalOpen, setIsStockInModalOpen] = useState(false);
   const [isStockOutModalOpen, setIsStockOutModalOpen] = useState(false);
+  const [isImportInModalOpen, setIsImportInModalOpen] = useState(false);
+  const [isImportOutModalOpen, setIsImportOutModalOpen] = useState(false);
 
   useEffect(() => {
     fetchTransactions();
@@ -40,7 +43,47 @@ export const TransactionsPage: React.FC = () => {
     }
   };
 
-  // Your existing filtering and sorting logic...
+  const handleSearch = (value: string) => {
+    setSearchTerm(value);
+    filterTransactions(value, transactionType);
+  };
+
+  const handleTypeFilter = (type: 'all' | 'in' | 'out') => {
+    setTransactionType(type);
+    filterTransactions(searchTerm, type);
+  };
+
+  const filterTransactions = (search: string, type: 'all' | 'in' | 'out') => {
+    let filtered = [...transactions];
+
+    if (search) {
+      const searchLower = search.toLowerCase();
+      filtered = filtered.filter(transaction =>
+        transaction.productName.toLowerCase().includes(searchLower) ||
+        transaction.reason.toLowerCase().includes(searchLower)
+      );
+    }
+
+    if (type !== 'all') {
+      filtered = filtered.filter(transaction => transaction.type === type);
+    }
+
+    setFilteredTransactions(filtered);
+  };
+
+  const handleSort = (column: keyof Transaction) => {
+    const isAsc = sortColumn === column && sortDirection === 'asc';
+    setSortDirection(isAsc ? 'desc' : 'asc');
+    setSortColumn(column);
+
+    const sorted = [...filteredTransactions].sort((a, b) => {
+      if (a[column] < b[column]) return isAsc ? 1 : -1;
+      if (a[column] > b[column]) return isAsc ? -1 : 1;
+      return 0;
+    });
+
+    setFilteredTransactions(sorted);
+  };
 
   const columns = [
     { 
@@ -71,10 +114,24 @@ export const TransactionsPage: React.FC = () => {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center space-y-4 sm:space-y-0">
         <h1 className="text-2xl font-bold text-gray-900">Transactions</h1>
-        <div className="flex space-x-2">
+        <div className="flex flex-wrap gap-2">
           <Button 
-            leftIcon={<Plus size={16} />}
             variant="outline"
+            leftIcon={<Upload size={16} />}
+            onClick={() => setIsImportInModalOpen(true)}
+          >
+            Import Stock In
+          </Button>
+          <Button 
+            variant="outline"
+            leftIcon={<Upload size={16} />}
+            onClick={() => setIsImportOutModalOpen(true)}
+          >
+            Import Stock Out
+          </Button>
+          <Button 
+            variant="outline"
+            leftIcon={<Plus size={16} />}
             onClick={() => setIsStockInModalOpen(true)}
           >
             Stock In
@@ -89,7 +146,29 @@ export const TransactionsPage: React.FC = () => {
       </div>
 
       <Card>
-        {/* Your existing search and filter UI */}
+        <div className="p-4 border-b border-gray-200">
+          <div className="flex flex-col sm:flex-row sm:items-center space-y-4 sm:space-y-0 sm:space-x-4">
+            <div className="flex-1">
+              <Input
+                placeholder="Search transactions..."
+                value={searchTerm}
+                onChange={(e) => handleSearch(e.target.value)}
+                leftIcon={<Search className="h-5 w-5 text-gray-400" />}
+              />
+            </div>
+            <div className="flex items-center space-x-2">
+              <select
+                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                value={transactionType}
+                onChange={(e) => handleTypeFilter(e.target.value as 'all' | 'in' | 'out')}
+              >
+                <option value="all">All Types</option>
+                <option value="in">Stock In</option>
+                <option value="out">Stock Out</option>
+              </select>
+            </div>
+          </div>
+        </div>
         
         {filteredTransactions.length === 0 ? (
           <div className="text-center py-8">
@@ -140,6 +219,38 @@ export const TransactionsPage: React.FC = () => {
             setIsStockOutModalOpen(false);
           }}
           onCancel={() => setIsStockOutModalOpen(false)}
+        />
+      </Modal>
+
+      {/* Import Stock In Modal */}
+      <Modal
+        isOpen={isImportInModalOpen}
+        onClose={() => setIsImportInModalOpen(false)}
+        title="Import Stock In Data"
+      >
+        <TransactionImport
+          type="in"
+          onSuccess={() => {
+            fetchTransactions();
+            setIsImportInModalOpen(false);
+          }}
+          onCancel={() => setIsImportInModalOpen(false)}
+        />
+      </Modal>
+
+      {/* Import Stock Out Modal */}
+      <Modal
+        isOpen={isImportOutModalOpen}
+        onClose={() => setIsImportOutModalOpen(false)}
+        title="Import Stock Out Data"
+      >
+        <TransactionImport
+          type="out"
+          onSuccess={() => {
+            fetchTransactions();
+            setIsImportOutModalOpen(false);
+          }}
+          onCancel={() => setIsImportOutModalOpen(false)}
         />
       </Modal>
     </div>
